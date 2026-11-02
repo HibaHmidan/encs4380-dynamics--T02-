@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +8,8 @@
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 
   <style>
+    * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
       max-width: 900px;
@@ -25,51 +26,85 @@
     }
 
     .control { margin: 16px 0; }
+
     input[type="range"] { width: 100%; }
-    button, select { font-size: 16px; padding: 8px; margin: 2px; }
-    .plot { width: 100%; height: 330px; }
+
+    button, select {
+      font-size: 16px;
+      padding: 8px;
+      margin: 3px 0;
+      max-width: 100%;
+    }
+
+    .plot {
+      width: 100%;
+      height: 440px;
+    }
+
     .table-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #aaa; padding: 7px; text-align: left; }
-    pre { background: #f3f3f3; padding: 10px; overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #aaa;
+      padding: 7px;
+      text-align: left;
+    }
+
+    pre {
+      background: #f3f3f3;
+      padding: 10px;
+      overflow-x: auto;
+    }
+
     .pass { color: green; font-weight: bold; }
     .fail { color: red; font-weight: bold; }
     .note { color: #555; }
+
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      h1 { font-size: 25px; }
+      h2 { font-size: 21px; }
+      .plot { height: 480px; }
+      th, td { font-size: 14px; }
+    }
   </style>
 </head>
 
 <body>
-
-  <!-- Add Module 2 link when module2.html is published -->
-  <p><a href="index.html">Module 1</a> | Module 3</p>
+  <p>
+    <a href="index.html">Module 1</a> |
+    <a href="module2.html">Module 2</a> |
+    Module 3
+  </p>
 
   <h1>Module 3: Second-Order Response</h1>
 
   <p>
     Mass-spring-damper: m x'' + b x' + k x = F(t).<br>
-    G(s) = K ωn² / (s² + 2ζωn s + ωn²),<br>
+    G(s) = K ωn² / (s² + 2ζωn s + ωn²)<br>
     ωn = √(k/m), ζ = b / (2√(km)), K = 1/k.
   </p>
 
   <p class="note">
-    Here k is the spring stiffness (N/m), while K = 1/k is the
-    static gain from force to displacement (m/N).
-    We choose a step force A = k newtons, so the final
-    displacement K·A = 1 m.
-    The system starts at rest; the step plot shows y/(K·A).
-    Rise time uses 10% to 90%; settling time uses a ±5% band.
+    k is spring stiffness (N/m); K = 1/k is static gain (m/N).
+    The step force has amplitude A = k newtons, so the final
+    displacement K·A = 1 m. Changing k also changes this step force.
+    The system starts at rest.
+    Rise time uses 10%–90%; settling time uses a ±5% band.
   </p>
 
-
-  <!-- PREDICT THEN CHECK -->
   <div class="box">
     <h2>Predict, then check</h2>
 
     <p>
-      Start with an underdamped system (ζ &lt; 1). Keep m and k fixed
-      and increase b toward critical damping.
-      What happens to the overshoot?
-      Predict first, then try the example buttons or the b slider.
+      Start with an underdamped system (ζ &lt; 1).
+      Keep m and k fixed and increase b toward critical damping.
+      What happens to overshoot?
+      Choose a prediction, try the b slider, then check.
     </p>
 
     <select id="guess">
@@ -83,8 +118,6 @@
     <p id="feedback" aria-live="polite"></p>
   </div>
 
-
-  <!-- PARAMETERS -->
   <div class="box">
     <h2>Parameters</h2>
 
@@ -127,16 +160,17 @@
     </button>
 
     <p id="derivedInfo"></p>
+    <p id="forceInfo"></p>
   </div>
 
-
-  <!-- STEP RESPONSE -->
   <h2>Step response</h2>
   <div id="stepPlot" class="plot"></div>
 
   <p class="note">
     Dotted lines show the ±5% settling band.
-    Markers show response measurements.
+    Measurements are estimated from sampled curve points
+    with interpolation. Very small overshoots may be below
+    numerical resolution.
   </p>
 
   <div class="table-wrapper">
@@ -144,22 +178,19 @@
       <thead>
         <tr>
           <th>Measurement</th>
-          <th>Read from the curve</th>
-          <th>Formula (underdamped only)</th>
+          <th>Read from curve</th>
+          <th>Formula (underdamped)</th>
         </tr>
       </thead>
       <tbody id="metricsBody"></tbody>
     </table>
   </div>
 
-
-  <!-- POLES -->
   <h2>Poles in the s-plane</h2>
   <div id="splanePlot" class="plot"></div>
   <p id="poleInfo"></p>
+  <p id="eigenInfo"></p>
 
-
-  <!-- STATE SPACE -->
   <h2>State-space form</h2>
 
   <p>
@@ -168,22 +199,21 @@
   </p>
 
   <pre id="matrixText"></pre>
-  <p id="eigenInfo"></p>
 
   <div id="phasePlot" class="plot"></div>
 
   <p class="note">
-    Phase plane: (x1, x2) moves from (0, 0) to (1, 0).
-    Underdamped systems spiral; critically damped and
-    overdamped systems do not.
+    The state path approaches (1, 0) from (0, 0).
+    Underdamped systems spiral around the equilibrium.
+    Critical and overdamped systems do not spiral.
+    Near critical damping, oscillations can be too small to see.
   </p>
 
-
-  <!-- VALIDATION -->
   <h2>Validation Checks 4, 5 and 6</h2>
 
   <p class="note">
-    These checks use fixed values, independently of the sliders.
+    These checks use fixed assignment values,
+    independently of the sliders.
   </p>
 
   <div class="table-wrapper">
@@ -200,193 +230,216 @@
     </table>
   </div>
 
-
   <script>
-
-    // Find HTML element
     function get(id) {
       return document.getElementById(id);
     }
 
-
-    // Determine damping type from zeta
-    function classify(zeta) {
-      if (zeta < 1 - 1e-6) return "under";
-      if (zeta <= 1 + 1e-6) return "critical";
-      return "over";
+    function num(x) {
+      return x === null ? "—" : x.toFixed(3);
     }
 
+    function complexText(c) {
+      if (Math.abs(c.im) < 1e-10) {
+        return num(c.re);
+      }
 
-    // Poles: roots of s² + 2ζωn s + ωn²
+      return num(c.re) +
+        (c.im >= 0 ? " + j" : " - j") +
+        num(Math.abs(c.im));
+    }
+
+    // Use the physical discriminant to classify damping.
+    function parameters(m, b, k) {
+      const wn = Math.sqrt(k / m);
+      const zeta = b / (2 * Math.sqrt(k * m));
+      const discriminant = b * b - 4 * m * k;
+      const tolerance = 1e-10 * Math.max(b * b, 4 * m * k);
+
+      const type = Math.abs(discriminant) <= tolerance
+        ? "critical"
+        : discriminant < 0 ? "under" : "over";
+
+      return { wn, zeta, discriminant, type };
+    }
+
     function polesOf(m, b, k) {
-      const wn = Math.sqrt(k / m);
-      const zeta = b / (2 * Math.sqrt(k * m));
-      const type = classify(zeta);
+      const p = parameters(m, b, k);
+      const real = -b / (2 * m);
 
-      if (type === "under") {
-        const wd = wn * Math.sqrt(1 - zeta * zeta);
+      if (p.type === "under") {
+        const imaginary = Math.sqrt(-p.discriminant) / (2 * m);
+
         return [
-          { re: -zeta * wn, im: wd },
-          { re: -zeta * wn, im: -wd }
+          { re: real, im: imaginary },
+          { re: real, im: -imaginary }
         ];
       }
 
-      if (type === "critical") {
+      if (p.type === "critical") {
         return [
-          { re: -wn, im: 0 },
-          { re: -wn, im: 0 }
+          { re: real, im: 0 },
+          { re: real, im: 0 }
         ];
       }
 
-      const r = wn * Math.sqrt(zeta * zeta - 1);
+      // Stable evaluation of the slow and fast real poles.
+      const root = Math.sqrt(p.discriminant);
+      const slow = -2 * k / (b + root);
+      const fast = -(b + root) / (2 * m);
+
       return [
-        { re: -zeta * wn + r, im: 0 },
-        { re: -zeta * wn - r, im: 0 }
+        { re: slow, im: 0 },
+        { re: fast, im: 0 }
       ];
     }
 
-
-    // Eigenvalues of A = [[0,1],[-k/m,-b/m]]
+    // Eigenvalues from trace and determinant of A.
     function eigenvaluesOf(m, b, k) {
-      const tr = -b / m;
-      const det = k / m;
-      const disc = tr * tr / 4 - det;
+      const trace = -b / m;
+      const determinant = k / m;
+      const d = trace * trace - 4 * determinant;
+      const tolerance =
+        1e-10 * Math.max(trace * trace, 4 * determinant);
 
-      if (disc >= 0) {
-        const r = Math.sqrt(disc);
+      if (Math.abs(d) <= tolerance) {
         return [
-          { re: tr / 2 + r, im: 0 },
-          { re: tr / 2 - r, im: 0 }
+          { re: trace / 2, im: 0 },
+          { re: trace / 2, im: 0 }
         ];
       }
 
-      const w = Math.sqrt(-disc);
+      if (d < 0) {
+        const imaginary = Math.sqrt(-d) / 2;
+
+        return [
+          { re: trace / 2, im: imaginary },
+          { re: trace / 2, im: -imaginary }
+        ];
+      }
+
+      const fast = (trace - Math.sqrt(d)) / 2;
+      const slow = determinant / fast;
+
       return [
-        { re: tr / 2, im: w },
-        { re: tr / 2, im: -w }
+        { re: slow, im: 0 },
+        { re: fast, im: 0 }
       ];
     }
 
-
-    // Calculate step response and measurements
     function analyse(m, b, k) {
-      const wn = Math.sqrt(k / m);
-      const zeta = b / (2 * Math.sqrt(k * m));
-      const type = classify(zeta);
-
-      let respond, tEnd, wd = 0;
+      const p = parameters(m, b, k);
+      const { wn, zeta, type } = p;
+      let respond;
+      let tEnd;
+      let wd = 0;
 
       if (type === "under") {
-
-        // Underdamped closed-form response
-        wd = wn * Math.sqrt(1 - zeta * zeta);
-        const sg = zeta * wn;
+        const decay = b / (2 * m);
+        wd = Math.sqrt(-p.discriminant) / (2 * m);
 
         respond = function(t) {
-          const e = Math.exp(-sg * t);
+          const e = Math.exp(-decay * t);
 
           return [
-            1 - e * (Math.cos(wd * t) +
-                     (sg / wd) * Math.sin(wd * t)),
-            (wn * wn / wd) * e * Math.sin(wd * t)
+            1 - e * (
+              Math.cos(wd * t) +
+              decay * Math.sin(wd * t) / wd
+            ),
+            wn * wn * e * Math.sin(wd * t) / wd
           ];
         };
 
-        tEnd = Math.max(6 / sg, 1.5 * Math.PI / wd);
+        // Use decay time, avoiding excessive duration near ζ = 1.
+        // At 8/decay the remaining response is well within 5%.
+        tEnd = 8 / decay;
 
       } else if (type === "critical") {
-
-        // Critically damped response
         respond = function(t) {
           const e = Math.exp(-wn * t);
+
           return [
             1 - (1 + wn * t) * e,
             wn * wn * t * e
           ];
         };
 
-        tEnd = 6 / wn;
+        tEnd = 8 / wn;
 
       } else {
-
-        // Overdamped response: two real poles
-        const r = wn * Math.sqrt(zeta * zeta - 1);
-        const s1 = -zeta * wn + r;
-        const s2 = -zeta * wn - r;
+        const poles = polesOf(m, b, k);
+        const slow = poles[0].re;
+        const fast = poles[1].re;
+        const gap = slow - fast;
 
         respond = function(t) {
-          const e1 = Math.exp(s1 * t);
-          const e2 = Math.exp(s2 * t);
+          const eSlow = Math.exp(slow * t);
+
+          // expm1 improves accuracy when poles are close.
+          const difference =
+            eSlow * (-Math.expm1(-gap * t));
 
           return [
-            1 + (s2 * e1 - s1 * e2) / (s1 - s2),
-            wn * wn * (e1 - e2) / (s1 - s2)
+            1 - eSlow + slow * difference / gap,
+            wn * wn * difference / gap
           ];
         };
 
-        tEnd = 6 * (zeta + Math.sqrt(zeta * zeta - 1)) / wn;
+        tEnd = 8 / (-slow);
       }
 
-
-      // Generate 2001 points for the response
-      const N = 2000;
-      const t = [], y = [], v = [];
+      const N = 5000;
+      const t = [];
+      const y = [];
+      const v = [];
 
       for (let i = 0; i <= N; i++) {
         const ti = tEnd * i / N;
-        const result = respond(ti);
+        const values = respond(ti);
 
         t.push(ti);
-        y.push(result[0]);
-        v.push(result[1]);
+        y.push(values[0]);
+        v.push(values[1]);
       }
 
-
-      // Find first crossing of a response level
-      function crossTime(level) {
+      function crossing(level) {
         for (let i = 1; i <= N; i++) {
-          if (y[i] >= level) {
+          if (y[i - 1] < level && y[i] >= level) {
             return t[i - 1] +
               (level - y[i - 1]) *
               (t[i] - t[i - 1]) /
               (y[i] - y[i - 1]);
           }
         }
+
         return null;
       }
 
+      const t10 = crossing(0.1);
+      const t90 = crossing(0.9);
 
-      // Rise time: 10% to 90%
-      const t10 = crossTime(0.1);
-      const t90 = crossTime(0.9);
+      const riseTime = t10 !== null && t90 !== null
+        ? t90 - t10 : null;
 
-      const riseTime =
-        (t10 !== null && t90 !== null)
-          ? t90 - t10 : null;
-
-
-      // Peak time and percentage overshoot
       let peakIndex = 0;
 
       for (let i = 1; i <= N; i++) {
-        if (y[i] > y[peakIndex]) {
-          peakIndex = i;
-        }
+        if (y[i] > y[peakIndex]) peakIndex = i;
       }
 
-      const hasOvershoot = y[peakIndex] - 1 > 1e-6;
+      const hasOvershoot =
+        type === "under" && y[peakIndex] > 1 + 1e-10;
+
       const overshoot = hasOvershoot
-        ? (y[peakIndex] - 1) * 100 : 0;
+        ? 100 * (y[peakIndex] - 1) : 0;
 
       const peakTime = hasOvershoot ? t[peakIndex] : null;
 
-
-      // Settling time: last exit from ±5% band
-      let last = -1;
+      let lastOutside = -1;
 
       for (let i = N; i >= 0; i--) {
         if (Math.abs(y[i] - 1) > 0.05) {
-          last = i;
+          lastOutside = i;
           break;
         }
       }
@@ -394,17 +447,18 @@
       let settlingTime = null;
       let settlingLevel = null;
 
-      if (last >= 0 && last < N) {
-        settlingLevel = y[last] > 1 ? 1.05 : 0.95;
+      if (lastOutside >= 0 && lastOutside < N) {
+        const i = lastOutside;
+        settlingLevel = y[i] > 1 ? 1.05 : 0.95;
 
-        settlingTime = t[last] +
-          (settlingLevel - y[last]) *
-          (t[last + 1] - t[last]) /
-          (y[last + 1] - y[last]);
+        settlingTime = t[i] +
+          (settlingLevel - y[i]) *
+          (t[i + 1] - t[i]) /
+          (y[i + 1] - y[i]);
       }
 
       return {
-        wn, zeta, wd, type, tEnd, t, y, v,
+        wn, zeta, type, wd, tEnd, t, y, v,
         t10, t90, riseTime,
         hasOvershoot, overshoot, peakTime,
         peakValue: y[peakIndex],
@@ -412,37 +466,57 @@
       };
     }
 
+    const config = {
+      responsive: true,
+      displayModeBar: false
+    };
 
-    // Format numbers to 3 decimal places
-    function num(x) {
-      return x === null ? "-" : x.toFixed(3);
+    // Shared layout with room for the legend on phones.
+    function layout(title, xTitle, yTitle) {
+      const mobile = window.innerWidth <= 600;
+
+      return {
+        title: {
+          text: title,
+          font: { size: mobile ? 17 : 20 }
+        },
+        font: { size: mobile ? 11 : 13 },
+        xaxis: {
+          title: { text: xTitle, standoff: 12 },
+          automargin: true,
+          nticks: 5
+        },
+        yaxis: {
+          title: { text: yTitle, standoff: 10 },
+          automargin: true,
+          nticks: 6
+        },
+        legend: {
+          orientation: "h",
+          x: 0,
+          y: -0.3,
+          xanchor: "left",
+          yanchor: "top",
+          font: { size: mobile ? 10 : 12 }
+        },
+        margin: {
+          t: 55,
+          b: mobile ? 145 : 115,
+          l: mobile ? 55 : 65,
+          r: 20
+        }
+      };
     }
 
-
-    // Format complex numbers
-    function complexText(c) {
-      if (Math.abs(c.im) < 1e-12) {
-        return num(c.re);
-      }
-
-      return num(c.re) +
-        (c.im > 0 ? " + j" : " - j") +
-        num(Math.abs(c.im));
-    }
-
-
-    // Update all graphs and displayed values
     function draw() {
-
       const m = Number(get("mass").value);
       const b = Number(get("damper").value);
       const k = Number(get("spring").value);
+      const a = analyse(m, b, k);
 
       get("mValue").textContent = m.toFixed(1);
       get("bValue").textContent = b.toFixed(1);
       get("kValue").textContent = k.toFixed(1);
-
-      const a = analyse(m, b, k);
 
       const names = {
         under: "Underdamped (ζ < 1)",
@@ -451,195 +525,164 @@
       };
 
       get("derivedInfo").textContent =
-        "ωn = " + a.wn.toFixed(3) + " rad/s; " +
-        "ζ = " + a.zeta.toFixed(3) +
+        "ωn = " + a.wn.toFixed(4) +
+        " rad/s; ζ = " + a.zeta.toFixed(4) +
         " → " + names[a.type];
 
+      get("forceInfo").textContent =
+        "Step force A = " + k.toFixed(1) +
+        " N; static gain K = " + (1 / k).toFixed(4) +
+        " m/N; final displacement = 1 m.";
 
-      // STEP RESPONSE GRAPH
       const traces = [{
         x: a.t,
         y: a.y,
         mode: "lines",
-        name: "Normalized response"
+        name: "Response"
       }];
 
-      // Mark 10% and 90% levels
       traces.push({
         x: [a.t10, a.t90],
         y: [0.1, 0.9],
         mode: "markers+text",
         text: ["10%", "90%"],
         textposition: ["top left", "bottom right"],
-        marker: { size: 9 },
+        marker: { size: 8 },
         name: "Rise time"
       });
 
-      // Mark the peak when overshoot exists
       if (a.hasOvershoot) {
         traces.push({
           x: [a.peakTime],
           y: [a.peakValue],
           mode: "markers+text",
-          text: ["peak"],
+          text: ["Peak"],
           textposition: "top right",
-          marker: { size: 10, symbol: "diamond" },
+          marker: { size: 9, symbol: "diamond" },
           name: "Peak"
         });
       }
 
-      // Mark settling time
       if (a.settlingTime !== null) {
         traces.push({
           x: [a.settlingTime],
           y: [a.settlingLevel],
-          mode: "markers+text",
-          text: ["settled"],
-          textposition: "bottom right",
-          marker: { size: 10, symbol: "square" },
-          name: "Settling time"
+          mode: "markers",
+          marker: { size: 9, symbol: "square" },
+          name: "Settling"
         });
       }
 
-      Plotly.react("stepPlot", traces, {
-        title: "Step Response",
-        xaxis: {
-          title: "Time (s)",
-          range: [0, a.tEnd]
-        },
-        yaxis: {
-          title: "Output y/(K·A)",
-          rangemode: "tozero"
-        },
-        shapes: [
-          {
-            type: "line",
-            x0: 0, x1: a.tEnd,
-            y0: 1.05, y1: 1.05,
-            line: { dash: "dot", color: "gray" }
-          },
-          {
-            type: "line",
-            x0: 0, x1: a.tEnd,
-            y0: 0.95, y1: 0.95,
-            line: { dash: "dot", color: "gray" }
-          },
-          {
-            type: "line",
-            x0: 0, x1: a.tEnd,
-            y0: 1, y1: 1,
-            line: { dash: "dash", color: "lightgray" }
-          }
-        ],
-        legend: { orientation: "h" },
-        margin: { t: 50, b: 70, l: 65, r: 30 }
-      }, {
-        responsive: true,
-        displaylogo: false
-      });
+      const stepLayout = layout(
+        "Step Response",
+        "Time (s)",
+        "Normalized output y/(KA)"
+      );
 
+      stepLayout.xaxis.range = [0, a.tEnd];
+      stepLayout.yaxis.rangemode = "tozero";
 
-      // RESPONSE METRICS TABLE
-      let formulaOvershoot = "-";
-      let formulaPeak = "-";
+      stepLayout.shapes = [0.95, 1, 1.05].map(level => ({
+        type: "line",
+        x0: 0,
+        x1: a.tEnd,
+        y0: level,
+        y1: level,
+        line: {
+          dash: level === 1 ? "dash" : "dot",
+          color: level === 1 ? "lightgray" : "gray"
+        }
+      }));
 
-      if (a.type === "under" && a.hasOvershoot) {
-        formulaOvershoot =
-          (100 * Math.exp(-Math.PI * a.zeta /
-          Math.sqrt(1 - a.zeta * a.zeta))).toFixed(3) + " %";
+      Plotly.react("stepPlot", traces, stepLayout, config);
 
-        formulaPeak = (Math.PI / a.wd).toFixed(3) + " s";
-      }
+      const theoreticalOvershoot = a.type === "under"
+        ? 100 * Math.exp(
+            -Math.PI * a.zeta /
+            Math.sqrt(1 - a.zeta * a.zeta)
+          )
+        : null;
 
-      get("metricsBody").innerHTML =
-        "<tr><td>Overshoot</td><td>" +
-        a.overshoot.toFixed(3) + " %</td><td>" +
-        formulaOvershoot + "</td></tr>" +
+      const theoreticalPeak = a.type === "under"
+        ? Math.PI / a.wd : null;
 
-        "<tr><td>Peak time</td><td>" +
-        (a.peakTime === null
-          ? "No peak (no overshoot)"
-          : num(a.peakTime) + " s") +
-        "</td><td>" + formulaPeak + "</td></tr>" +
+      const peakDescription = a.peakTime !== null
+        ? num(a.peakTime) + " s"
+        : a.type === "under"
+          ? "Below numerical resolution"
+          : "No finite peak";
 
-        "<tr><td>Rise time (10%-90%)</td><td>" +
-        num(a.riseTime) + " s</td><td>-</td></tr>" +
+      get("metricsBody").innerHTML = `
+        <tr>
+          <td>Overshoot</td>
+          <td>${num(a.overshoot)}%</td>
+          <td>${theoreticalOvershoot === null
+            ? "—" : num(theoreticalOvershoot) + "%"}</td>
+        </tr>
+        <tr>
+          <td>Peak time</td>
+          <td>${peakDescription}</td>
+          <td>${theoreticalPeak === null
+            ? "—" : num(theoreticalPeak) + " s"}</td>
+        </tr>
+        <tr>
+          <td>Rise time (10%–90%)</td>
+          <td>${num(a.riseTime)} s</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Settling time (±5%)</td>
+          <td>${a.settlingTime === null
+            ? "Not settled in plotted interval"
+            : num(a.settlingTime) + " s"}</td>
+          <td>—</td>
+        </tr>
+      `;
 
-        "<tr><td>Settling time (±5%)</td><td>" +
-        (a.settlingTime === null
-          ? "Not settled"
-          : num(a.settlingTime) + " s") +
-        "</td><td>-</td></tr>";
-
-
-      // POLES AND EIGENVALUES
       const poles = polesOf(m, b, k);
       const eig = eigenvaluesOf(m, b, k);
 
-      let biggest = 0.5;
+      const R = 1.35 * Math.max(
+        0.5,
+        ...poles.map(p => Math.max(Math.abs(p.re), Math.abs(p.im)))
+      );
 
-      poles.forEach(function(p) {
-        biggest = Math.max(
-          biggest, Math.abs(p.re), Math.abs(p.im)
-        );
-      });
+      const poleLayout = layout(
+        "s-plane",
+        "Real part (1/s)",
+        "Imaginary part (rad/s)"
+      );
 
-      const R = biggest * 1.4;
+      poleLayout.xaxis.range = [-R, 0.3 * R];
+      poleLayout.yaxis.range = [-R, R];
+      poleLayout.xaxis.zeroline = true;
+      poleLayout.yaxis.zeroline = true;
 
       Plotly.react("splanePlot", [
         {
           x: poles.map(p => p.re),
           y: poles.map(p => p.im),
           mode: "markers",
-          name: "Poles of G(s)",
-          marker: { symbol: "x", size: 14 }
+          name: "Poles",
+          marker: { symbol: "x", size: 13 }
         },
         {
           x: eig.map(p => p.re),
           y: eig.map(p => p.im),
           mode: "markers",
-          name: "Eigenvalues of A",
+          name: "Eigenvalues",
           marker: {
             symbol: "circle-open",
             size: 22,
             line: { width: 2 }
           }
         }
-      ], {
-        title: "s-plane",
-        xaxis: {
-          title: "Real part (1/s)",
-          range: [-R, 0.4 * R],
-          zeroline: true
-        },
-        yaxis: {
-          title: "Imaginary part (rad/s)",
-          range: [-R, R],
-          zeroline: true
-        },
-        legend: { orientation: "h" },
-        margin: { t: 50, b: 70, l: 65, r: 30 }
-      }, {
-        responsive: true,
-        displaylogo: false
-      });
+      ], poleLayout, config);
 
       get("poleInfo").textContent =
         "Poles: " + complexText(poles[0]) +
-        " and " + complexText(poles[1]);
-
-
-      // STATE-SPACE MATRICES
-      function cell(x) {
-        return x.toFixed(3).padStart(9);
-      }
-
-      get("matrixText").textContent =
-        "A = [" + cell(0) + cell(1) + " ]\n" +
-        "    [" + cell(-k/m) + cell(-b/m) + " ]\n\n" +
-        "B = [" + cell(0) + " ]\n" +
-        "    [" + cell(1/m) + " ]\n\n" +
-        "C = [1  0],   D = 0";
+        " and " + complexText(poles[1]) +
+        (a.type === "critical" ? " (repeated pole)." : ".");
 
       get("eigenInfo").textContent =
         "Eigenvalues of A: " +
@@ -647,112 +690,103 @@
         complexText(eig[1]) +
         ". These equal the poles of G(s).";
 
+      function cell(value) {
+        return value.toFixed(3).padStart(9);
+      }
 
-      // PHASE-PLANE GRAPH
+      get("matrixText").textContent =
+        "A = [" + cell(0) + cell(1) + " ]\n" +
+        "    [" + cell(-k / m) + cell(-b / m) + " ]\n\n" +
+        "B = [" + cell(0) + " ]\n" +
+        "    [" + cell(1 / m) + " ]\n\n" +
+        "C = [1  0],   D = 0";
+
       Plotly.react("phasePlot", [
         {
           x: a.y,
           y: a.v,
           mode: "lines",
-          name: "State path (x1, x2)"
+          name: "State path"
         },
         {
           x: [0],
           y: [0],
           mode: "markers",
-          marker: { size: 10 },
-          name: "Start (0,0)"
+          name: "Start",
+          marker: { size: 9 }
         },
         {
           x: [1],
           y: [0],
           mode: "markers",
-          marker: { size: 12, symbol: "star" },
-          name: "Final (1,0)"
+          name: "Equilibrium",
+          marker: { size: 11, symbol: "star" }
         }
-      ], {
-        title: "Phase Plane",
-        xaxis: { title: "x1 = Position (m)" },
-        yaxis: { title: "x2 = Velocity (m/s)" },
-        legend: { orientation: "h" },
-        margin: { t: 50, b: 70, l: 65, r: 30 }
-      }, {
-        responsive: true,
-        displaylogo: false
-      });
+      ], layout(
+        "Phase Plane",
+        "x1: Position (m)",
+        "x2: Velocity (m/s)"
+      ), config);
     }
 
-
-    // VALIDATION CHECKS 4, 5, 6
     function validate() {
-      const rows = [];
-
-      // Check 4: zeta = 0.5, expected overshoot 16.3%
       const under = analyse(1, 2, 4);
-
-      rows.push({
-        name: "4: Overshoot with ζ = 0.5",
-        expected: "16.3%",
-        actual: under.overshoot.toFixed(3) + "%",
-        pass: Math.abs(under.overshoot - 16.3) < 0.05
-      });
-
-
-      // Check 5: zeta = 1, expected no overshoot
       const critical = analyse(1, 4, 4);
-
-      rows.push({
-        name: "5: Overshoot with ζ = 1",
-        expected: "0% (no overshoot)",
-        actual: critical.overshoot.toFixed(3) + "%",
-        pass: !critical.hasOvershoot
-      });
-
-
-      // Check 6: eigenvalues = poles = -1 ± j1.732
       const eig = eigenvaluesOf(1, 2, 4);
       const poles = polesOf(1, 2, 4);
 
-      rows.push({
-        name: "6: Eigenvalues (m=1, b=2, k=4)",
-        expected: "-1 ± j1.732",
-        actual: complexText(eig[0]) +
-                " and " + complexText(eig[1]),
-        pass:
-          Math.abs(eig[0].re + 1) < 0.001 &&
-          Math.abs(Math.abs(eig[0].im) - 1.732) < 0.001
-      });
-
-      let diff = 0;
+      let difference = 0;
 
       for (let i = 0; i < 2; i++) {
-        diff = Math.max(
-          diff,
+        difference = Math.max(
+          difference,
           Math.abs(eig[i].re - poles[i].re),
           Math.abs(eig[i].im - poles[i].im)
         );
       }
 
-      rows.push({
-        name: "6: Eigenvalues equal poles",
-        expected: "Difference = 0",
-        actual: "Difference = " + diff.toExponential(2),
-        pass: diff < 1e-9
-      });
+      const rows = [
+        {
+          test: "4: Overshoot with ζ = 0.5",
+          expected: "16.3%",
+          actual: num(under.overshoot) + "%",
+          pass: Math.abs(under.overshoot - 16.3) < 0.05
+        },
+        {
+          test: "5: Overshoot with ζ = 1",
+          expected: "0% (no overshoot)",
+          actual: num(critical.overshoot) + "%",
+          pass: !critical.hasOvershoot
+        },
+        {
+          test: "6: Eigenvalues (m=1, b=2, k=4)",
+          expected: "−1 ± j1.732",
+          actual: eig.map(complexText).join(" and "),
+          pass: eig.every(p =>
+            Math.abs(p.re + 1) < 0.001 &&
+            Math.abs(Math.abs(p.im) - 1.732) < 0.001
+          )
+        },
+        {
+          test: "6: Eigenvalues equal poles",
+          expected: "Difference = 0",
+          actual: "Difference = " + difference.toExponential(2),
+          pass: difference < 1e-9
+        }
+      ];
 
-      get("validationBody").innerHTML = rows.map(function(r) {
-        return "<tr><td>" + r.name +
-               "</td><td>" + r.expected +
-               "</td><td>" + r.actual +
-               "</td><td class='" +
-               (r.pass ? "pass" : "fail") + "'>" +
-               (r.pass ? "PASS" : "FAIL") +
-               "</td></tr>";
-      }).join("");
+      get("validationBody").innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.test}</td>
+          <td>${r.expected}</td>
+          <td>${r.actual}</td>
+          <td class="${r.pass ? "pass" : "fail"}">
+            ${r.pass ? "PASS" : "FAIL"}
+          </td>
+        </tr>
+      `).join("");
     }
 
-
-    // PRESET BUTTONS
     function preset(bValue) {
       get("mass").value = 1;
       get("spring").value = 4;
@@ -760,20 +794,10 @@
       draw();
     }
 
-    get("presetUnder").addEventListener("click", function() {
-      preset(2);
-    });
+    get("presetUnder").addEventListener("click", () => preset(2));
+    get("presetCritical").addEventListener("click", () => preset(4));
+    get("presetOver").addEventListener("click", () => preset(8));
 
-    get("presetCritical").addEventListener("click", function() {
-      preset(4);
-    });
-
-    get("presetOver").addEventListener("click", function() {
-      preset(8);
-    });
-
-
-    // PREDICTION ACTIVITY
     get("checkGuess").addEventListener("click", function() {
       const answer = get("guess").value;
 
@@ -784,22 +808,25 @@
 
       get("feedback").textContent =
         (answer === "less" ? "Correct! " : "Not quite. ") +
-        "Increasing b increases ζ. For ζ < 1, overshoot decreases. " +
-        "At ζ ≥ 1, overshoot is zero.";
+        "At fixed m and k, increasing b increases ζ. " +
+        "Overshoot decreases as ζ approaches 1, " +
+        "and is zero for ζ ≥ 1.";
     });
 
+    ["mass", "damper", "spring"].forEach(id => {
+      get(id).addEventListener("input", draw);
+    });
 
-    // REDRAW WHEN SLIDERS MOVE
-    get("mass").addEventListener("input", draw);
-    get("damper").addEventListener("input", draw);
-    get("spring").addEventListener("input", draw);
+    // Recalculate layout after screen rotation or window resizing.
+    let resizeTimer;
 
+    window.addEventListener("resize", function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(draw, 150);
+    });
 
-    // INITIALIZE
     draw();
     validate();
-
   </script>
-
 </body>
 </html>
