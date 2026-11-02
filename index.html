@@ -1,495 +1,248 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>ENCS4380 Dynamic Characteristics Toolkit</title>
-
-  <!-- Library for drawing graphs -->
+  <title>ENCS4380 - Dynamic Characteristics Toolkit</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: auto;
-      padding: 16px;
-      line-height: 1.5;
-    }
-
-    .box {
-      border: 1px solid #aaa;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 20px 0;
-    }
-
-    .control {
-      margin: 20px 0;
-    }
-
-    input[type="range"] {
-      width: 100%;
-    }
-
-    button, select {
-      padding: 8px;
-    }
-
-    .plot {
-      width: 100%;
-      min-height: 300px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      border: 1px solid #aaa;
-      padding: 8px;
-      text-align: left;
-    }
-
-    .pass {
-      color: green;
-      font-weight: bold;
-    }
-
-    .fail {
-      color: red;
-      font-weight: bold;
-    }
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 16px; line-height: 1.5; }
+    .box { border: 1px solid #aaa; border-radius: 8px; padding: 14px; margin: 18px 0; }
+    .control { margin: 16px 0; }
+    input[type="range"] { width: 100%; }
+    button, select { font-size: 16px; padding: 8px; }
+    .plot { width: 100%; height: 330px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #aaa; padding: 7px; text-align: left; }
+    .pass { color: green; font-weight: bold; }
+    .fail { color: red; font-weight: bold; }
+    .note { color: #555; }
   </style>
 </head>
 
 <body>
-
   <h1>Module 1: First-Order Time Response</h1>
-
-  <p>
-    Model: τ dy/dt + y = Kx(t)
-  </p>
-
-  <p>
-    Step height A = 1 and ramp slope A = 1.
-  </p>
-
-  <!-- PREDICT THEN CHECK -->
+  <p>Model: &tau; dy/dt + y = Kx(t)</p>
+  <p class="note">We use A = 1 (unit step or unit-slope ramp) and y(0) = 0.</p>
 
   <div class="box">
-    <h3>Predict, then check</h3>
-
-    <p>
-      If you increase the time constant τ,
-      will the sensor reach 63.2% of its final value
-      sooner or later?
-    </p>
-
-    <select id="prediction">
-      <option value="">Choose an answer</option>
-      <option value="sooner">Sooner</option>
-      <option value="same">At the same time</option>
-      <option value="later">Later</option>
-    </select>
-
-    <button id="checkPrediction">Check</button>
-
-    <p id="predictionResult"></p>
+    <h2>Predict, then check</h2>
+    <p id="question"></p>
+    <select id="guess"></select>
+    <button id="checkGuess">Check prediction</button>
+    <p id="feedback" aria-live="polite"></p>
+    <p class="note">Predict first, then move the sliders to check your answer.</p>
   </div>
 
-
-  <!-- INPUT CONTROLS -->
-
   <div class="box">
-    <h3>Sensor Parameters</h3>
-
+    <h2>Sensor parameters</h2>
     <div class="control">
-      <label for="inputType">Input type:</label>
-
+      <label for="inputType">Input:</label>
       <select id="inputType">
         <option value="step">Step</option>
         <option value="ramp">Ramp</option>
       </select>
     </div>
-
     <div class="control">
-      <label for="gain">
-        Gain K = <span id="gainValue">1</span>
-      </label>
-
-      <input
-        type="range"
-        id="gain"
-        min="0.5"
-        max="5"
-        step="0.5"
-        value="1"
-      >
+      <label for="gain">Gain K = <span id="gainValue">1</span></label>
+      <input id="gain" type="range" min="0.5" max="5" step="0.5" value="1">
     </div>
-
     <div class="control">
-      <label for="tau">
-        Time constant τ = <span id="tauValue">10</span> s
-      </label>
-
-      <input
-        type="range"
-        id="tau"
-        min="1"
-        max="30"
-        step="0.5"
-        value="10"
-      >
+      <label for="tau">Time constant &tau; = <span id="tauValue">10</span> s</label>
+      <input id="tau" type="range" min="1" max="30" step="0.5" value="10">
     </div>
   </div>
 
-
-  <!-- MAIN RESPONSE GRAPH -->
-
-  <h2>Sensor Response</h2>
-
+  <h2>Sensor response</h2>
   <div id="responsePlot" class="plot"></div>
-
   <p id="responseInfo"></p>
 
-
-  <!-- ERROR FRACTION GRAPH -->
-
-  <h2>Error Fraction</h2>
-
-  <p>
-    The normalized remaining error is:
-    e^(-t/τ).
-  </p>
-
+  <h2>Error fraction (logarithmic scale)</h2>
+  <p id="errorMeaning"></p>
   <div id="errorPlot" class="plot"></div>
-
   <p id="slopeInfo"></p>
 
-
-  <!-- VALIDATION TABLE -->
-
-  <h2>Validation Check 1: Step Response</h2>
-
-  <p>
-    This validation always uses the step response,
-    even when Ramp is selected above.
-  </p>
-
+  <h2>Validation Check 1: First-Order Step</h2>
+  <p class="note">This always checks the step response, even when Ramp is selected. A = 1.</p>
   <table>
-    <tr>
-      <th>Test</th>
-      <th>Expected</th>
-      <th>Calculated</th>
-      <th>Result</th>
-    </tr>
-
-    <tr>
-      <td>y(τ) / K</td>
-      <td>0.632</td>
-      <td id="value1"></td>
-      <td id="result1"></td>
-    </tr>
-
-    <tr>
-      <td>y(3τ) / K</td>
-      <td>0.950</td>
-      <td id="value2"></td>
-      <td id="result2"></td>
-    </tr>
+    <tr><th>Test</th><th>Expected</th><th>Calculated</th><th>Result</th></tr>
+    <tr><td>y(&tau;) / KA</td><td>0.632</td><td id="value1"></td><td id="result1"></td></tr>
+    <tr><td>y(3&tau;) / KA</td><td>0.950</td><td id="value2"></td><td id="result2"></td></tr>
   </table>
 
-
   <script>
-
-    // Find an HTML element using its ID
+    // Short name for finding an element by its ID.
     function get(id) {
       return document.getElementById(id);
     }
 
-
-    // FIRST-ORDER STEP RESPONSE
-    // A = 1
-    // y(t) = K(1 - e^(-t/tau))
-
+    // Formulas from the first-order lecture (A = 1, y(0) = 0).
     function stepResponse(t, K, tau) {
       return K * (1 - Math.exp(-t / tau));
     }
-
-
-    // FIRST-ORDER RAMP RESPONSE
-    // A = 1
-    // y(t) = K(t - tau + tau*e^(-t/tau))
 
     function rampResponse(t, K, tau) {
       return K * (t - tau + tau * Math.exp(-t / tau));
     }
 
+    // Ask a different question for each input before moving sliders.
+    function setQuestion() {
+      const step = get("inputType").value === "step";
+      get("question").textContent = step
+        ? "If you increase τ, will the sensor reach 63.2% sooner or later?"
+        : "If you increase τ, what happens to the steady-state ramp time lag?";
 
-    // UPDATE ALL GRAPHS AND VALUES
+      get("guess").innerHTML = step
+        ? '<option value="">Choose...</option><option value="sooner">Sooner</option><option value="same">Same time</option><option value="later">Later</option>'
+        : '<option value="">Choose...</option><option value="less">Decreases</option><option value="same">Stays the same</option><option value="more">Increases</option>';
+
+      get("feedback").textContent = "";
+    }
 
     function draw() {
-
-      // Read slider values
       const K = Number(get("gain").value);
       const tau = Number(get("tau").value);
-      const inputType = get("inputType").value;
-
-      // Show current values
+      const step = get("inputType").value === "step";
       get("gainValue").textContent = K;
       get("tauValue").textContent = tau;
 
+      // Keep step time fixed so changing τ visibly changes response speed.
+      const tEnd = step ? 100 : 10 * tau;
+      const times = [], outputs = [], ideal = [];
 
-      // Arrays for graph points
-      const times = [];
-      const outputs = [];
-      const ideal = [];
-
-      // Calculate points from 0 to 100 seconds
-      for (let t = 0; t <= 100; t += 0.25) {
-
+      for (let i = 0; i <= 300; i++) {
+        const t = i * tEnd / 300;
         times.push(t);
-
-        if (inputType === "step") {
-
-          outputs.push(stepResponse(t, K, tau));
-
-          // Ideal step output
-          ideal.push(K);
-
-        } else {
-
-          outputs.push(rampResponse(t, K, tau));
-
-          // Ideal ramp output
-          ideal.push(K * t);
-        }
+        outputs.push(step ? stepResponse(t, K, tau) : rampResponse(t, K, tau));
+        ideal.push(step ? K : K * t);
       }
 
-
-      // Graph lines
       const traces = [
-        {
-          x: times,
-          y: outputs,
-          mode: "lines",
-          name: "Sensor Output"
-        },
-        {
-          x: times,
-          y: ideal,
-          mode: "lines",
-          name: "Ideal Output",
-          line: { dash: "dash" }
-        }
+        { x: times, y: outputs, mode: "lines", name: "Sensor output" },
+        { x: times, y: ideal, mode: "lines", name: "Ideal output", line: { dash: "dash" } }
       ];
+      const shapes = [];
+      const notes = [];
 
-
-      // STEP RESPONSE MARKERS
-
-      if (inputType === "step") {
-
-        const yTau = stepResponse(tau, K, tau);
-        const y3Tau = stepResponse(3 * tau, K, tau);
-
+      if (step) {
+        const y1 = stepResponse(tau, K, tau);
+        const y3 = stepResponse(3 * tau, K, tau);
         traces.push({
-          x: [tau, 3 * tau],
-          y: [yTau, y3Tau],
-          mode: "markers+text",
-          text: ["63.2% at τ", "95% at 3τ"],
+          x: [tau, 3 * tau], y: [y1, y3],
+          mode: "markers+text", text: ["63.2% at τ", "95% at 3τ"],
           textposition: ["bottom right", "top right"],
-          marker: { size: 10 },
-          name: "Time Markers"
+          marker: { size: 9 }, name: "Time markers"
         });
-
+        shapes.push(
+          { type: "line", x0: tau, x1: tau, y0: 0, y1: y1, line: { dash: "dot", color: "gray" } },
+          { type: "line", x0: 3 * tau, x1: 3 * tau, y0: 0, y1: y3, line: { dash: "dot", color: "gray" } }
+        );
         get("responseInfo").textContent =
-          "Step response: Final output = " + K +
-          ". At t = τ = " + tau +
-          " s, the output reaches 63.2%. At t = 3τ = " +
-          (3 * tau) + " s, it reaches approximately 95%.";
-
+          "Final value = K = " + K + ". 63.2% at " + tau +
+          " s; approximately 95% at " + (3 * tau) + " s.";
       } else {
+        // At 8τ the ramp is nearly in steady state.
+        const t0 = 8 * tau;
+        const output = rampResponse(t0, K, tau);
+        const idealOutput = K * t0;
+        const idealTime = output / K; // Time when ideal ramp has the same height.
 
-        // RAMP RESPONSE INFORMATION
-
-        const steadyError = K * tau;
-
+        shapes.push(
+          { type: "line", x0: t0, x1: t0, y0: output, y1: idealOutput,
+            line: { color: "red", width: 3 } },
+          { type: "line", x0: idealTime, x1: t0, y0: output, y1: output,
+            line: { color: "green", width: 3 } }
+        );
+        notes.push(
+          { x: t0, y: (output + idealOutput) / 2, text: "error ≈ Kτ",
+            showarrow: false, xanchor: "left", font: { color: "red" } },
+          { x: (idealTime + t0) / 2, y: output, text: "lag ≈ τ",
+            showarrow: false, yanchor: "top", font: { color: "green" } }
+        );
         get("responseInfo").textContent =
-          "Ramp response: Time lag = τ = " + tau +
-          " s. Steady-state tracking error = Kτ = " +
-          steadyError.toFixed(2) + ".";
+          "Ramp: steady-state time lag = τ = " + tau +
+          " s; steady-state output error = Kτ = " + (K * tau).toFixed(2) +
+          ". The lines show these values approximately at t = 8τ.";
       }
-
-
-      // DRAW MAIN GRAPH
 
       Plotly.react("responsePlot", traces, {
+        title: step ? "Step Response" : "Ramp Response",
+        xaxis: { title: "Time (s)", range: [0, tEnd] },
+        yaxis: { title: "Output y(t)", rangemode: "tozero" },
+        shapes: shapes, annotations: notes,
+        margin: { t: 50, b: 60, l: 65, r: 30 }
+      }, { responsive: true, displaylogo: false });
 
-        title: {
-          text: inputType === "step"
-            ? "Step Response"
-            : "Ramp Response"
-        },
+      // Step: remaining output error. Ramp: remaining part of Kτ not yet reached.
+      get("errorMeaning").textContent = step
+        ? "Step: (K - y)/K = e^(-t/τ)."
+        : "Ramp: tracking error = Kt - y. Its final value is Kτ. " +
+          "The fraction still missing from that final error is e^(-t/τ).";
 
-        xaxis: {
-          title: "Time (s)",
-          range: [0, 100]
-        },
-
-        yaxis: {
-          title: "Output y(t)"
-        },
-
-        margin: {
-          t: 50,
-          b: 70
-        }
-
-      }, {
-        responsive: true
-      });
-
-
-      // ERROR FRACTION
-      // errorFraction = e^(-t/tau)
-
-      const errorTimes = [];
-      const errorValues = [];
-
+      const errorTimes = [], fractions = [];
       for (let i = 0; i <= 200; i++) {
-
         const t = 5 * tau * i / 200;
-
         errorTimes.push(t);
-
-        errorValues.push(Math.exp(-t / tau));
+        fractions.push(Math.exp(-t / tau));
       }
 
-
-      // DRAW LOGARITHMIC ERROR GRAPH
-
       Plotly.react("errorPlot", [
-
-        {
-          x: errorTimes,
-          y: errorValues,
-          mode: "lines",
-          name: "Error Fraction"
-        }
-
+        { x: errorTimes, y: fractions, mode: "lines", name: "Error fraction" },
+        { x: [tau], y: [Math.exp(-1)], mode: "markers+text",
+          text: ["0.368 at τ"], textposition: "top right", name: "At τ" }
       ], {
+        title: "Error Fraction (log axis)",
+        xaxis: { title: "Time (s)" },
+        yaxis: { title: "Error fraction", type: "log", range: [-2.5, 0] },
+        margin: { t: 50, b: 60, l: 65, r: 30 }
+      }, { responsive: true, displaylogo: false });
 
-        title: {
-          text: "Error Fraction (Log Scale)"
-        },
-
-        xaxis: {
-          title: "Time (s)"
-        },
-
-        yaxis: {
-          title: "Error Fraction",
-          type: "log"
-        }
-
-      }, {
-        responsive: true
-      });
-
-
-      // CALCULATE NATURAL-LOG SLOPE
-      // ln(errorFraction) = -t/tau
-      // Therefore slope = -1/tau
-
-      const last = errorTimes.length - 1;
-
-      const slope =
-        (Math.log(errorValues[last]) -
-         Math.log(errorValues[0])) /
-        (errorTimes[last] - errorTimes[0]);
-
+      // Natural-log slope is -1/τ (Plotly's log axis uses base 10).
+      const slope = (Math.log(fractions[120]) - Math.log(fractions[20])) /
+                    (errorTimes[120] - errorTimes[20]);
       get("slopeInfo").textContent =
-        "Slope of ln(error fraction) vs time = " +
-        slope.toFixed(4) +
-        " 1/s. Expected slope = -1/τ = " +
-        (-1 / tau).toFixed(4) + " 1/s.";
+        "Slope of ln(error fraction) = " + slope.toFixed(4) +
+        " 1/s; expected -1/τ = " + (-1 / tau).toFixed(4) +
+        " 1/s. (The graph's log axis uses base 10.)";
 
-
-      // VALIDATION CHECK 1
-      // Compare normalized step response with homework values
-
+      // Homework validation 1 always uses step, even if Ramp is selected.
       const result1 = stepResponse(tau, K, tau) / K;
       const result2 = stepResponse(3 * tau, K, tau) / K;
-
       get("value1").textContent = result1.toFixed(4);
       get("value2").textContent = result2.toFixed(4);
 
-
-      // Compare with expected rounded values
       const pass1 = Math.abs(result1 - 0.632) < 0.001;
       const pass2 = Math.abs(result2 - 0.950) < 0.001;
-
-      get("result1").textContent =
-        pass1 ? "PASS" : "FAIL";
-
-      get("result1").className =
-        pass1 ? "pass" : "fail";
-
-      get("result2").textContent =
-        pass2 ? "PASS" : "FAIL";
-
-      get("result2").className =
-        pass2 ? "pass" : "fail";
-
+      get("result1").textContent = pass1 ? "PASS" : "FAIL";
+      get("result2").textContent = pass2 ? "PASS" : "FAIL";
+      get("result1").className = pass1 ? "pass" : "fail";
+      get("result2").className = pass2 ? "pass" : "fail";
     }
 
-
-    // REDRAW WHEN A CONTROL CHANGES
-
-    get("gain").addEventListener("input", draw);
-
-    get("tau").addEventListener("input", draw);
-
-    get("inputType").addEventListener("change", draw);
-
-
-    // PREDICTION ACTIVITY
-
-    get("checkPrediction").addEventListener("click", function() {
-
-      const answer = get("prediction").value;
-
-      if (answer === "") {
-
-        get("predictionResult").textContent =
-          "Please choose an answer first.";
-
-      } else if (answer === "later") {
-
-        get("predictionResult").textContent =
-          "Correct! Increasing τ makes the sensor slower. " +
-          "The 63.2% point occurs at t = τ.";
-
-      } else {
-
-        get("predictionResult").textContent =
-          "Not correct. Increasing τ makes the sensor slower. " +
-          "The correct answer is Later.";
+    // Check the prediction, then allow the sliders to move.
+    get("checkGuess").addEventListener("click", function () {
+      const answer = get("guess").value;
+      if (!answer) {
+        get("feedback").textContent = "Choose an answer first.";
+        return;
       }
-
+      const step = get("inputType").value === "step";
+      const correct = step ? answer === "later" : answer === "more";
+      get("feedback").textContent = (correct ? "Correct! " : "Not quite. ") +
+        (step ? "A larger τ means the 63.2% point is reached later."
+              : "For a unit ramp, the steady-state time lag equals τ, so it increases.");
     });
 
+    get("gain").addEventListener("input", draw);
+    get("tau").addEventListener("input", draw);
+    get("inputType").addEventListener("change", function () {
+      setQuestion(); // New input means a new prediction.
+      draw();
+    });
 
-    // DRAW THE INITIAL GRAPHS
-
+    setQuestion();
     draw();
-
   </script>
-
 </body>
 </html>
