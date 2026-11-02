@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dynamics Toolkit</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <h1>Module 1: First-order step response</h1>
+  <p>τ = <span id="tauVal">10</span> s</p>
+  <input type="range" id="tau" min="1" max="30" step="0.5" value="10" style="width:100%">
+  <div id="plot"></div>
+  <p id="check"></p>
+
+  <script>
+    const K = 1, A = 1;   // fixed for now, we add sliders for them later
+
+    function draw() {
+      const tau = parseFloat(document.getElementById('tau').value);
+      document.getElementById('tauVal').textContent = tau;
+
+      // y(t) = K*A*(1 - e^(-t/tau)), drawn from 0 to 5*tau
+      const t = [], y = [];
+      for (let i = 0; i <= 300; i++) {
+        const ti = (5 * tau) * i / 300;
+        t.push(ti);
+        y.push(K * A * (1 - Math.exp(-ti / tau)));
+      }
+
+      // marker at t = tau
+      const yTau = K * A * (1 - Math.exp(-1));
+
+      Plotly.react('plot', [
+        { x: t, y: y, mode: 'lines', name: 'y(t)' },
+        { x: [tau], y: [yTau], mode: 'markers', name: 't = τ' }
+      ], {
+        xaxis: { title: 'time (s)' },
+        yaxis: { title: 'y(t)' }
+      }, { responsive: true });
+
+      // validation test 1: at t = tau the curve must be 63.2% of K*A
+      const ratio = yTau / (K * A);
+      const pass = Math.abs(ratio - 0.632) < 0.001;
+      document.getElementById('check').textContent =
+        'Check: y(τ)/KA expected 0.632, got ' + ratio.toFixed(3) + (pass ? ' PASS' : ' FAIL');
+    }
+
+    document.getElementById('tau').addEventListener('input', draw);
+    draw();
+  </script>
+</body>
+</html>
